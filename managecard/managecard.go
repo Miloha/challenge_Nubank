@@ -10,12 +10,45 @@ type Student struct {
 	FirstName, LastName string
 }
 
+//Cards struct represents a card
+type Cards struct {
+	ActiveCard     bool
+	AvailableLimit int
+}
+
+type Violations struct {
+	Violations []string
+}
+type ReplyCards struct {
+	ActiveCard     bool
+	AvailableLimit int
+	Violations     Violations
+}
+
 // FullName returns the fullname of the student.
 func (s Student) FullName() string {
 	return s.FirstName + " " + s.LastName
 }
 
 /*---------------*/
+
+func (c *Ouputs) add(payload Cards, reply *Cards) error {
+
+	var outs ReplyCards
+	outs.ActiveCard = payload.ActiveCard
+	outs.AvailableLimit = payload.AvailableLimit
+	outs.Violations.Violations[1] = "append()"
+
+	c.database[1] = outs
+	fmt.Printf("Birds : %+v", c.database)
+	return nil
+
+}
+
+// College struct represents a college.
+type Ouputs struct {
+	database map[int]interface{} // private
+}
 
 // College struct represents a college.
 type College struct {
