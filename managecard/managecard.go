@@ -2,6 +2,7 @@ package managecard
 
 import (
 	"fmt"
+	"time"
 )
 
 // Student struct represents a student.
@@ -54,62 +55,78 @@ type Ouputs struct {
 // College struct represents a college.
 type DataOuputs struct {
 	Account    Account
-	Violations Violations
+	Violations []string
 }
 
 /*---------------*/
 
 func (b *Ouputs) AddAccount(payload Cards, reply *DataOuputs) error {
 
-	var outs ReplyCards
-	outs.Account.ActiveCard = payload.ActiveCard
-	outs.Account.AvailableLimit = payload.AvailableLimit
-	var vi Violations
-	vi.Violations = append(vi.Violations, "siii")
-
 	// set reply value
-
-	b.database["account"] = outs
-	b.database["violations"] = vi
-
 	reply.Account.ActiveCard = payload.ActiveCard
 	reply.Account.AvailableLimit = payload.AvailableLimit
-	reply.Violations.Violations = vi.Violations
+	reply.Violations = []string{""}
+
+	b.database["account"] = reply.Account
+	b.database["violations"] = reply.Violations
+	b.database["lastime"] = nil
+
 	fmt.Printf("Birds : %+v", reply)
 	return nil
 
 }
 
-func (b *Ouputs) AddTransaction(payload Transaction, reply *OutputTransaction) error {
+func (b *Ouputs) AddTransaction(payload Transaction, reply *DataOuputs) error {
 
-	dataAccoun := b.database["account"].(map[string]interface{})
+	dataAccount := b.database["account"].(Account)
+	reply.Account.AvailableLimit = dataAccount.AvailableLimit
 
-	if dataAccoun["ActiveCard"].(bool) != true {
-		reply.Violations.Violations = append(reply.Violations.Violations, "account-not-initialized")
-		reply.Account.AvailableLimit = dataAccoun["AvailableLimit"].(float64)
+	if dataAccount.ActiveCard != true {
+		reply.Violations = append(reply.Violations, "account-not-initialized")
 		return nil
 
 	}
 
-	var vi Violations
-	reply.Account.ActiveCard = true
-	reply.Account.AvailableLimit = dataAccoun["AvailableLimit"].(float64) - payload.Amount
-	reply.Violations.Violations = vi.Violations
-	b.database["account"] = reply.Account
-	b.database["violations"] = vi
-
 	// set reply value
+	reply.Account.ActiveCard = true
+	reply.Violations = []string{""}
 
-	fmt.Printf("Birds : %+v", reply)
+	aprovalAmount(reply, payload.Amount)
+	if b.database["lastime"] == nil {
+		b.database["lastime"] = payload.Time
+	}
+
+	checkTime(reply, b.database["lastime"].(string), payload.Time)
+
+	b.database["account"] = reply.Account
+	b.database["violations"] = reply.Violations
+	b.database["lastime"] = payload.Time
+
 	return nil
 
 }
 
-func (b *Ouputs) Output(payload Ouputs, reply *Ouputs) error {
+func aprovalAmount(reply *DataOuputs, amaunt float64) float64 {
 
-	reply = b
+	newAmount := reply.Account.AvailableLimit - amaunt
 
-	return nil
+	if newAmount < 0 {
+		reply.Violations = []string{"high-frequency-small-interval"}
+	} else {
+		reply.Account.AvailableLimit = newAmount
+	}
+
+	return newAmount
+}
+
+func checkTime(reply *DataOuputs, newTime string, lastTime string) {
+
+	tlast, _ := time.Parse(time.RFC3339, lastTime)
+	tnew, _ := time.Parse(time.RFC3339, newTime)
+
+	if (tnew.Unix() - tlast.Unix()) < 10 {
+		reply.Violations = []string{"high-frequency-small-interval"}
+	}
 
 }
 
