@@ -22,7 +22,7 @@ type Violations struct {
 
 type Account struct {
 	ActiveCard     bool
-	AvailableLimit int
+	AvailableLimit float64
 }
 
 type ReplyCards struct {
