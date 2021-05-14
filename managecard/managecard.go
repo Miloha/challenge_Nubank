@@ -42,8 +42,8 @@ type Ouputs struct {
 
 // College struct represents a college.
 type DataOuputs struct {
-	database   map[string]interface{} // private
-	Violations []string
+	Account    Account
+	Violations Violations
 }
 
 /*---------------*/
@@ -60,8 +60,10 @@ func (b *Ouputs) Add(payload Cards, reply *DataOuputs) error {
 
 	b.database["account"] = outs
 	b.database["violations"] = vi
-	reply.database["account"] = outs
-	reply.Violations = vi.Violations
+
+	reply.Account.ActiveCard = payload.ActiveCard
+	reply.Account.AvailableLimit = payload.AvailableLimit
+	reply.Violations.Violations = vi.Violations
 	fmt.Printf("Birds : %+v", reply)
 	return nil
 
