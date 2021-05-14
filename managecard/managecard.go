@@ -13,16 +13,20 @@ type Student struct {
 //Cards struct represents a card
 type Cards struct {
 	ActiveCard     bool
-	AvailableLimit int
+	AvailableLimit float64
 }
 
 type Violations struct {
 	Violations []string
 }
-type ReplyCards struct {
+
+type Account struct {
 	ActiveCard     bool
 	AvailableLimit int
-	Violations     Violations
+}
+
+type ReplyCards struct {
+	Account Account
 }
 
 // FullName returns the fullname of the student.
@@ -32,27 +36,42 @@ func (s Student) FullName() string {
 
 // College struct represents a college.
 type Ouputs struct {
-	database map[int]interface{} // private
+	database map[string]interface{} // private
 }
 
 /*---------------*/
 
-func (c *Ouputs) addi(payload Cards, reply *Cards) error {
+func (b *Ouputs) Add(payload Cards, reply *Cards) error {
 
 	var outs ReplyCards
-	outs.ActiveCard = payload.ActiveCard
-	outs.AvailableLimit = payload.AvailableLimit
-	outs.Violations.Violations[1] = "append()"
+	outs.Account.ActiveCard = payload.ActiveCard
+	outs.Account.AvailableLimit = payload.AvailableLimit
+	var vi Violations
+	vi.Violations = append(vi.Violations, "siii")
 
-	c.database[1] = outs
-	fmt.Printf("Birds : %+v", c.database)
+	// set reply value
+	*reply = payload
+	b.database["account"] = outs
+	b.database["violations"] = vi
+	fmt.Printf("Birds : %+v", b.database)
 	return nil
 
 }
 
-// College struct represents a college.
-type College struct {
-	database map[int]Student // private
+func (c *College) Gge(payload Student, reply *Student) error {
+	// check if student already exists in the database
+	if _, ok := c.database[payload.ID]; ok {
+		return fmt.Errorf("student with id '%d' already exists", payload.ID)
+	}
+
+	// add student `p` in the database
+	c.database[payload.ID] = payload
+
+	// set reply value
+	*reply = payload
+
+	// return `nil` error
+	return nil
 }
 
 // Add methods adds a student to the college (procedure).
@@ -101,6 +120,11 @@ func NewCollege() *College {
 // NewCollege function returns a new instance of College (pointer).
 func NewCart() *Ouputs {
 	return &Ouputs{
-		database: make(map[int]interface{}),
+		database: make(map[string]interface{}),
 	}
+}
+
+// College struct represents a college.
+type College struct {
+	database map[int]Student // private
 }
