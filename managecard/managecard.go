@@ -39,11 +39,6 @@ type Ouputs struct {
 	database map[string]interface{} // private
 }
 
-// College struct represents a college.
-type DataOuputs struct {
-	database map[string]interface{} // private
-}
-
 /*---------------*/
 
 func (b *Ouputs) Add(payload Cards, reply *DataOuputs) error {
@@ -141,4 +136,9 @@ func NewCart() *Ouputs {
 // College struct represents a college.
 type College struct {
 	database map[int]Student // private
+}
+
+// College struct represents a college.
+type DataOuputs struct {
+	database map[string]interface{} // private
 }
