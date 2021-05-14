@@ -42,7 +42,7 @@ type Ouputs struct {
 
 // College struct represents a college.
 type DataOuputs struct {
-	database   map[string]ReplyCards // private
+	database   map[string]interface{} // private
 	Violations []string
 }
 
