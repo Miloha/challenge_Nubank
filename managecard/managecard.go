@@ -36,12 +36,19 @@ func (s Student) FullName() string {
 
 // College struct represents a college.
 type Ouputs struct {
-	database map[string]interface{} // private
+	database   map[string]ReplyCards // private
+	Violations Violations
+}
+
+// College struct represents a college.
+type DataOuputs struct {
+	database   map[string]Cards // private
+	Violations []string
 }
 
 /*---------------*/
 
-func (b *Ouputs) Add(payload Cards, reply *DataOuputs) error {
+func (b *Ouputs) Add(payload Cards, reply *Ouputs) error {
 
 	var outs ReplyCards
 	outs.Account.ActiveCard = payload.ActiveCard
@@ -52,9 +59,9 @@ func (b *Ouputs) Add(payload Cards, reply *DataOuputs) error {
 	// set reply value
 
 	b.database["account"] = outs
-	b.database["violations"] = vi
-	reply.database = b.database
-	fmt.Printf("Birds : %+v", b.database)
+	b.Violations = vi
+	reply = b
+	fmt.Printf("Birds : %+v", b)
 	return nil
 
 }
@@ -136,9 +143,4 @@ func NewCart() *Ouputs {
 // College struct represents a college.
 type College struct {
 	database map[int]Student // private
-}
-
-// College struct represents a college.
-type DataOuputs struct {
-	database map[string]interface{} // private
 }
