@@ -133,14 +133,14 @@ func NewCollege() *College {
 	}
 }
 
+// College struct represents a college.
+type College struct {
+	database map[int]Student // private
+}
+
 // NewCollege function returns a new instance of College (pointer).
 func NewCart() *Ouputs {
 	return &Ouputs{
 		database: make(map[string]ReplyCards),
 	}
-}
-
-// College struct represents a college.
-type College struct {
-	database map[int]Student // private
 }
