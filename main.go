@@ -13,7 +13,7 @@ func main() {
 
 	fmt.Println("hello 9000")
 
-	mit := managecard.NewCollege()
+	mit := managecard.NewCart()
 
 	// register `mit` object with `rpc.DefaultServer`
 	rpc.Register(mit)

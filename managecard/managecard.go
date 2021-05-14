@@ -30,9 +30,14 @@ func (s Student) FullName() string {
 	return s.FirstName + " " + s.LastName
 }
 
+// College struct represents a college.
+type Ouputs struct {
+	database map[int]interface{} // private
+}
+
 /*---------------*/
 
-func (c *Ouputs) add(payload Cards, reply *Cards) error {
+func (c *Ouputs) addi(payload Cards, reply *Cards) error {
 
 	var outs ReplyCards
 	outs.ActiveCard = payload.ActiveCard
@@ -43,11 +48,6 @@ func (c *Ouputs) add(payload Cards, reply *Cards) error {
 	fmt.Printf("Birds : %+v", c.database)
 	return nil
 
-}
-
-// College struct represents a college.
-type Ouputs struct {
-	database map[int]interface{} // private
 }
 
 // College struct represents a college.
@@ -95,5 +95,12 @@ func (c *College) Get(payload int, reply *Student) error {
 func NewCollege() *College {
 	return &College{
 		database: make(map[int]Student),
+	}
+}
+
+// NewCollege function returns a new instance of College (pointer).
+func NewCart() *Ouputs {
+	return &Ouputs{
+		database: make(map[int]interface{}),
 	}
 }
