@@ -36,26 +36,19 @@ func (s Student) FullName() string {
 
 // College struct represents a college.
 type Ouputs struct {
-	database   map[string]ReplyCards // private
-	Violations Violations
+	database map[string]interface{} // private
+
 }
 
 // College struct represents a college.
 type DataOuputs struct {
-	database   map[string]Cards // private
+	database   map[string]ReplyCards // private
 	Violations []string
-}
-
-// NewCollege function returns a new instance of College (pointer).
-func NewCart() *Ouputs {
-	return &Ouputs{
-		database: make(map[string]ReplyCards),
-	}
 }
 
 /*---------------*/
 
-func (b *Ouputs) Add(payload Cards, reply *Ouputs) error {
+func (b *Ouputs) Add(payload Cards, reply *DataOuputs) error {
 
 	var outs ReplyCards
 	outs.Account.ActiveCard = payload.ActiveCard
@@ -66,9 +59,10 @@ func (b *Ouputs) Add(payload Cards, reply *Ouputs) error {
 	// set reply value
 
 	b.database["account"] = outs
-	b.Violations = vi
-	reply = b
-	fmt.Printf("Birds : %+v", b)
+	b.database["violations"] = vi
+	reply.database["account"] = outs
+	reply.Violations = vi.Violations
+	fmt.Printf("Birds : %+v", reply)
 	return nil
 
 }
@@ -137,6 +131,13 @@ func (c *College) Get(payload int, reply *Student) error {
 func NewCollege() *College {
 	return &College{
 		database: make(map[int]Student),
+	}
+}
+
+// NewCollege function returns a new instance of College (pointer).
+func NewCart() *Ouputs {
+	return &Ouputs{
+		database: make(map[string]interface{}),
 	}
 }
 
