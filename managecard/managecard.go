@@ -136,7 +136,7 @@ func NewCollege() *College {
 // NewCollege function returns a new instance of College (pointer).
 func NewCart() *Ouputs {
 	return &Ouputs{
-		database: make(map[string]interface{}),
+		database: make(map[string]ReplyCards),
 	}
 }
 
