@@ -29,6 +29,17 @@ type ReplyCards struct {
 	Account Account
 }
 
+type OutputTransaction struct {
+	Account    Account
+	Violations Violations
+}
+
+type Transaction struct {
+	Merchant string
+	Amount   float64
+	Time     string
+}
+
 // FullName returns the fullname of the student.
 func (s Student) FullName() string {
 	return s.FirstName + " " + s.LastName
@@ -48,7 +59,7 @@ type DataOuputs struct {
 
 /*---------------*/
 
-func (b *Ouputs) Add(payload Cards, reply *DataOuputs) error {
+func (b *Ouputs) AddAccount(payload Cards, reply *DataOuputs) error {
 
 	var outs ReplyCards
 	outs.Account.ActiveCard = payload.ActiveCard
@@ -64,6 +75,31 @@ func (b *Ouputs) Add(payload Cards, reply *DataOuputs) error {
 	reply.Account.ActiveCard = payload.ActiveCard
 	reply.Account.AvailableLimit = payload.AvailableLimit
 	reply.Violations.Violations = vi.Violations
+	fmt.Printf("Birds : %+v", reply)
+	return nil
+
+}
+
+func (b *Ouputs) AddTransaction(payload Transaction, reply *OutputTransaction) error {
+
+	dataAccoun := b.database["account"].(map[string]interface{})
+
+	if dataAccoun["ActiveCard"].(bool) != true {
+		reply.Violations.Violations = append(reply.Violations.Violations, "account-not-initialized")
+		reply.Account.AvailableLimit = dataAccoun["AvailableLimit"].(float64)
+		return nil
+
+	}
+
+	var vi Violations
+	reply.Account.ActiveCard = true
+	reply.Account.AvailableLimit = dataAccoun["AvailableLimit"].(float64) - payload.Amount
+	reply.Violations.Violations = vi.Violations
+	b.database["account"] = reply.Account
+	b.database["violations"] = vi
+
+	// set reply value
+
 	fmt.Printf("Birds : %+v", reply)
 	return nil
 
