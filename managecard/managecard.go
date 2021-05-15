@@ -2,57 +2,30 @@ package managecard
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
-// Student struct represents a student.
-type Student struct {
-	ID                  int
-	FirstName, LastName string
-}
-
-//Cards struct represents a card
-type Cards struct {
-	ActiveCard     bool
-	AvailableLimit float64
-}
-
-type Violations struct {
-	Violations []string
-}
-
+//Account struct represents a card
 type Account struct {
 	ActiveCard     bool
 	AvailableLimit float64
 }
 
-type ReplyCards struct {
-	Account Account
-}
-
-type OutputTransaction struct {
-	Account    Account
-	Violations Violations
-}
-
+//Transaction struct represents a Ttansaction
 type Transaction struct {
 	Merchant string
 	Amount   float64
 	Time     string
 }
 
-// FullName returns the fullname of the student.
-func (s Student) FullName() string {
-	return s.FirstName + " " + s.LastName
-}
-
-// College struct represents a college.
+// Account DB struct represents a account.
 type Ouputs struct {
 	database map[string]interface{} // private
 
 }
 
-// College struct represents a college.
+// Reply struct.
 type DataOuputs struct {
 	Account    Account
 	Violations []string
@@ -60,16 +33,22 @@ type DataOuputs struct {
 
 /*---------------*/
 
-func (b *Ouputs) AddAccount(payload Cards, reply *DataOuputs) error {
+// Add methods adds an account to the struct (procedure).
+func (b *Ouputs) AddAccount(payload Account, reply *DataOuputs) error {
+
+	//active or not account
+	if initializeAccount(b, reply) != true {
+		return nil
+	}
 
 	// set reply value
 	reply.Account.ActiveCard = payload.ActiveCard
 	reply.Account.AvailableLimit = payload.AvailableLimit
-	reply.Violations = []string{""}
 
+	// set struct DB
 	b.database["account"] = reply.Account
 	b.database["violations"] = reply.Violations
-	b.database["lastime"] = nil
+	b.database["lastime"] = ""
 
 	fmt.Printf("Birds : %+v", reply)
 	return nil
@@ -78,26 +57,17 @@ func (b *Ouputs) AddAccount(payload Cards, reply *DataOuputs) error {
 
 func (b *Ouputs) AddTransaction(payload Transaction, reply *DataOuputs) error {
 
-	dataAccount := b.database["account"].(Account)
-	reply.Account.AvailableLimit = dataAccount.AvailableLimit
-
-	if dataAccount.ActiveCard != true {
-		reply.Violations = append(reply.Violations, "account-not-initialized")
-		return nil
-
-	}
-
 	// set reply value
 	reply.Account.ActiveCard = true
 	reply.Violations = []string{""}
 
+	// approve the transaction amount
 	aprovalAmount(reply, payload.Amount)
-	if b.database["lastime"] == nil {
-		b.database["lastime"] = payload.Time
-	}
 
-	checkTime(reply, b.database["lastime"].(string), payload.Time)
+	// Check time
+	checkTime(reply, payload.Time, b.database["lastime"].(string))
 
+	// set struct DB
 	b.database["account"] = reply.Account
 	b.database["violations"] = reply.Violations
 	b.database["lastime"] = payload.Time
@@ -106,12 +76,42 @@ func (b *Ouputs) AddTransaction(payload Transaction, reply *DataOuputs) error {
 
 }
 
+//active or not account
+func initializeAccount(b *Ouputs, reply *DataOuputs) bool {
+
+	if b.database["account"] == nil {
+		reply.Violations = append(reply.Violations, "account-not-initialized")
+		return false
+
+	}
+	dataAccount := b.database["account"].(Account)
+	reply.Account.AvailableLimit = dataAccount.AvailableLimit
+	if dataAccount.ActiveCard != true {
+		reply.Violations = append(reply.Violations, "account-not-initialized")
+		return false
+
+	}
+	reply.Violations = []string{""}
+
+	return true
+
+}
+
+//colse Account
+func (b *Ouputs) Ending(payload Transaction, reply *DataOuputs) error {
+	b.database = make(map[string]interface{})
+
+	return nil
+
+}
+
+// approve the transaction amount
 func aprovalAmount(reply *DataOuputs, amaunt float64) float64 {
 
 	newAmount := reply.Account.AvailableLimit - amaunt
 
 	if newAmount < 0 {
-		reply.Violations = []string{"high-frequency-small-interval"}
+		reply.Violations = append(reply.Violations, "insufficient-limit")
 	} else {
 		reply.Account.AvailableLimit = newAmount
 	}
@@ -119,84 +119,35 @@ func aprovalAmount(reply *DataOuputs, amaunt float64) float64 {
 	return newAmount
 }
 
+//check the times
 func checkTime(reply *DataOuputs, newTime string, lastTime string) {
 
-	tlast, _ := time.Parse(time.RFC3339, lastTime)
-	tnew, _ := time.Parse(time.RFC3339, newTime)
+	if lastTime == "" {
+		lastTime = "2006-01-02T15:04:05.000Z"
+	}
+
+	const layout = "2006-01-02T15:04:05.000000Z"
+
+	tt := strings.Split(lastTime, "Z")
+	lastTime = tt[0] + "000Z"
+
+	tt = strings.Split(newTime, "Z")
+	newTime = tt[0] + "000Z"
+
+	tlast, _ := time.Parse(layout, lastTime)
+	tnew, _ := time.Parse(layout, newTime)
+
+	fmt.Println(tlast.Unix() - tnew.Unix())
 
 	if (tnew.Unix() - tlast.Unix()) < 10 {
-		reply.Violations = []string{"high-frequency-small-interval"}
+		reply.Violations = append(reply.Violations, "high-frequency-small-interval")
 	}
 
 }
 
-func (c *College) Gge(payload Student, reply *Student) error {
-	// check if student already exists in the database
-	if _, ok := c.database[payload.ID]; ok {
-		return fmt.Errorf("student with id '%d' already exists", payload.ID)
-	}
-
-	// add student `p` in the database
-	c.database[payload.ID] = payload
-
-	// set reply value
-	*reply = payload
-
-	// return `nil` error
-	return nil
-}
-
-// Add methods adds a student to the college (procedure).
-func (c *College) Add(payload Student, reply *Student) error {
-
-	// check if student already exists in the database
-	if _, ok := c.database[payload.ID]; ok {
-		return fmt.Errorf("student with id '%d' already exists", payload.ID)
-	}
-
-	// add student `p` in the database
-	c.database[payload.ID] = payload
-
-	// set reply value
-	*reply = payload
-
-	// return `nil` error
-	return nil
-}
-
-// Get methods returns a student with specific id (procedure).
-func (c *College) Get(payload int, reply *Student) error {
-
-	// get student with id `p` from the database
-	result, ok := c.database[payload]
-
-	// check if student exists in the database
-	if !ok {
-		return fmt.Errorf("student with id '%d' does not exist", payload)
-	}
-
-	// set reply value
-	*reply = result
-
-	// return `nil` error
-	return nil
-}
-
-// NewCollege function returns a new instance of College (pointer).
-func NewCollege() *College {
-	return &College{
-		database: make(map[int]Student),
-	}
-}
-
-// NewCollege function returns a new instance of College (pointer).
-func NewCart() *Ouputs {
+// NewCard function returns a new instance of card (pointer).
+func NewCard() *Ouputs {
 	return &Ouputs{
 		database: make(map[string]interface{}),
 	}
-}
-
-// College struct represents a college.
-type College struct {
-	database map[int]Student // private
 }

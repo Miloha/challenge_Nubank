@@ -11,9 +11,9 @@ import (
 
 func main() {
 
-	fmt.Println("hello 9000")
+	fmt.Println("Hello Nubank :9000")
 
-	mit := managecard.NewCart()
+	mit := managecard.NewCard()
 
 	// register `mit` object with `rpc.DefaultServer`
 	rpc.Register(mit)
