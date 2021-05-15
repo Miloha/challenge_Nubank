@@ -12,7 +12,7 @@ type Account struct {
 	AvailableLimit float64
 }
 
-//Transaction struct represents a Ttansaction
+//Transaction struct represents a Transaction
 type Transaction struct {
 	Merchant string
 	Amount   float64
@@ -33,7 +33,7 @@ type DataOuputs struct {
 
 /*---------------*/
 
-// Add methods adds an account to the struct (procedure).
+// Add methods adds an account to the struct DB (procedure).
 func (b *Ouputs) AddAccount(payload Account, reply *DataOuputs) error {
 
 	// set reply value
@@ -45,11 +45,12 @@ func (b *Ouputs) AddAccount(payload Account, reply *DataOuputs) error {
 	b.database["violations"] = reply.Violations
 	b.database["lastime"] = "2006-01-02T15:04:05.000Z"
 
-	fmt.Printf("Birds : %+v", b.database["lastime"])
+	fmt.Printf("Account : %+v \n", reply.Violations)
 	return nil
 
 }
 
+// Analyze the transaction (procedure).
 func (b *Ouputs) AddTransaction(payload Transaction, reply *DataOuputs) error {
 
 	//active or not account
@@ -64,7 +65,6 @@ func (b *Ouputs) AddTransaction(payload Transaction, reply *DataOuputs) error {
 	// approve the transaction amount
 	aprovalAmount(reply, payload.Amount)
 
-	fmt.Printf("irds : %+v", b.database["lastime"])
 	// Check time
 	checkTime(reply, payload.Time, b.database["lastime"].(string))
 
@@ -72,6 +72,8 @@ func (b *Ouputs) AddTransaction(payload Transaction, reply *DataOuputs) error {
 	b.database["account"] = reply.Account
 	b.database["violations"] = reply.Violations
 	b.database["lastime"] = payload.Time
+
+	fmt.Printf("Transaction : %+v \n", reply.Violations)
 
 	return nil
 
@@ -120,7 +122,7 @@ func aprovalAmount(reply *DataOuputs, amaunt float64) float64 {
 	return newAmount
 }
 
-//check the times
+//check the time
 func checkTime(reply *DataOuputs, newTime string, lastTime string) {
 
 	if lastTime == "" {
@@ -137,8 +139,6 @@ func checkTime(reply *DataOuputs, newTime string, lastTime string) {
 
 	tlast, _ := time.Parse(layout, lastTime)
 	tnew, _ := time.Parse(layout, newTime)
-
-	fmt.Println(tlast.Unix() - tnew.Unix())
 
 	if (tnew.Unix() - tlast.Unix()) < 10 {
 		reply.Violations = append(reply.Violations, "high-frequency-small-interval")
