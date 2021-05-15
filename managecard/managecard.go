@@ -36,11 +36,6 @@ type DataOuputs struct {
 // Add methods adds an account to the struct (procedure).
 func (b *Ouputs) AddAccount(payload Account, reply *DataOuputs) error {
 
-	//active or not account
-	if initializeAccount(b, reply) != true {
-		return nil
-	}
-
 	// set reply value
 	reply.Account.ActiveCard = payload.ActiveCard
 	reply.Account.AvailableLimit = payload.AvailableLimit
@@ -48,14 +43,19 @@ func (b *Ouputs) AddAccount(payload Account, reply *DataOuputs) error {
 	// set struct DB
 	b.database["account"] = reply.Account
 	b.database["violations"] = reply.Violations
-	b.database["lastime"] = ""
+	b.database["lastime"] = "2006-01-02T15:04:05.000Z"
 
-	fmt.Printf("Birds : %+v", reply)
+	fmt.Printf("Birds : %+v", b.database["lastime"])
 	return nil
 
 }
 
 func (b *Ouputs) AddTransaction(payload Transaction, reply *DataOuputs) error {
+
+	//active or not account
+	if initializeAccount(b, reply) != true {
+		return nil
+	}
 
 	// set reply value
 	reply.Account.ActiveCard = true
@@ -64,6 +64,7 @@ func (b *Ouputs) AddTransaction(payload Transaction, reply *DataOuputs) error {
 	// approve the transaction amount
 	aprovalAmount(reply, payload.Amount)
 
+	fmt.Printf("irds : %+v", b.database["lastime"])
 	// Check time
 	checkTime(reply, payload.Time, b.database["lastime"].(string))
 
