@@ -2,6 +2,7 @@ package managecard
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -43,7 +44,12 @@ func (b *Ouputs) AddAccount(payload Account, reply *DataOuputs) error {
 	// set struct DB
 	b.database["account"] = reply.Account
 	b.database["violations"] = reply.Violations
-	b.database["lastime"] = "2006-01-02T15:04:05.000Z"
+	b.database["lastime1"] = "2006-01-02T15:04:05.000Z"
+	b.database["lastime2"] = "2006-01-02T15:04:05.000Z"
+	b.database["lastime3"] = "2006-01-02T15:04:05.000Z"
+	b.database["merchant"] = make(map[string]string)
+	b.database["amount"] = float64(0)
+	b.database["nt"] = int(0)
 
 	fmt.Printf("Account : %+v \n", reply.Violations)
 	return nil
@@ -58,20 +64,45 @@ func (b *Ouputs) AddTransaction(payload Transaction, reply *DataOuputs) error {
 		return nil
 	}
 
+	nt := b.database["nt"].(int)
+	if nt < 3 {
+		nt++
+	}
+	b.database["nt"] = nt
+
 	// set reply value
 	reply.Account.ActiveCard = true
 	reply.Violations = []string{""}
 
-	// approve the transaction amount
-	aprovalAmount(reply, payload.Amount)
+	if nt == 1 {
+		b.database["lastime1"] = payload.Time
+	} else if nt == 2 {
+		b.database["lastime2"] = payload.Time
+	} else if nt == 3 {
+		b.database["lastime3"] = payload.Time
+	}
 
 	// Check time
-	checkTime(reply, payload.Time, b.database["lastime"].(string))
+	if aprovalMerchan(reply, b.database, payload) == true && checkTime(reply, b.database) == true {
+
+		// approve the transaction amount
+		aprovalAmount(reply, payload.Amount)
+	}
+
+	if nt == 3 {
+		b.database["lastime1"] = b.database["lastime2"]
+		b.database["lastime2"] = b.database["lastime3"]
+		b.database["lastime3"] = "2006-01-02T15:04:05.000Z"
+	}
 
 	// set struct DB
 	b.database["account"] = reply.Account
 	b.database["violations"] = reply.Violations
-	b.database["lastime"] = payload.Time
+	merchants := b.database["merchant"].(map[string]string)
+	s := fmt.Sprintf("%f", payload.Amount)
+	merchants[payload.Merchant] = payload.Time + ";" + s
+	b.database["merchant"] = merchants
+	b.database["amount"] = payload.Amount
 
 	fmt.Printf("Transaction : %+v \n", reply.Violations)
 
@@ -90,7 +121,7 @@ func initializeAccount(b *Ouputs, reply *DataOuputs) bool {
 	dataAccount := b.database["account"].(Account)
 	reply.Account.AvailableLimit = dataAccount.AvailableLimit
 	if dataAccount.ActiveCard != true {
-		reply.Violations = append(reply.Violations, "account-not-initialized")
+		reply.Violations = append(reply.Violations, "card-not-active")
 		return false
 
 	}
@@ -122,12 +153,29 @@ func aprovalAmount(reply *DataOuputs, amaunt float64) float64 {
 	return newAmount
 }
 
-//check the time
-func checkTime(reply *DataOuputs, newTime string, lastTime string) {
+// approve the transaction amount
+func aprovalMerchan(reply *DataOuputs, database map[string]interface{}, payload Transaction) bool {
 
-	if lastTime == "" {
-		lastTime = "2006-01-02T15:04:05.000Z"
+	merchants := database["merchant"].(map[string]string)
+
+	if merchants[payload.Merchant] == "" {
+		return true
 	}
+
+	datam := strings.Split(merchants[payload.Merchant], ";")
+	difTime := timesString(payload.Time, datam[0])
+	amount, _ := strconv.ParseFloat(datam[1], 32)
+	if difTime <= 120 && payload.Amount == amount {
+		reply.Violations = append(reply.Violations, "doubled-transaction")
+		return false
+
+	}
+
+	return true
+
+}
+
+func timesString(newTime string, lastTime string) int64 {
 
 	const layout = "2006-01-02T15:04:05.000000Z"
 
@@ -140,9 +188,25 @@ func checkTime(reply *DataOuputs, newTime string, lastTime string) {
 	tlast, _ := time.Parse(layout, lastTime)
 	tnew, _ := time.Parse(layout, newTime)
 
-	if (tnew.Unix() - tlast.Unix()) < 10 {
-		reply.Violations = append(reply.Violations, "high-frequency-small-interval")
+	return tnew.Unix() - tlast.Unix()
+
+}
+
+//check the time
+func checkTime(reply *DataOuputs, database map[string]interface{}) bool {
+
+	if database["nt"].(int) < 3 {
+		return true
 	}
+
+	difTime := timesString(database["lastime3"].(string), database["lastime1"].(string))
+
+	if difTime <= 120 {
+		reply.Violations = append(reply.Violations, "high-frequency-small-interval")
+		return false
+	}
+
+	return true
 
 }
 
