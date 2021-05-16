@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 	"net/rpc"
 
@@ -22,9 +21,9 @@ func main() {
 	// registers a handler on the `rpc.DefaultRPCPath` endpoint to respond to RPC messages
 	rpc.HandleHTTP()
 
-	http.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {
-		io.WriteString(res, "RPC SERVER LIVE!")
-	})
+	//	http.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {
+	//		io.WriteString(res, "RPC SERVER LIVE!")
+	//	})
 
 	// listen and serve default HTTP server
 	http.ListenAndServe(":9000", nil)

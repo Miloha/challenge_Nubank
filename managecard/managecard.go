@@ -61,6 +61,7 @@ func (b *Ouputs) AddTransaction(payload Transaction, reply *DataOuputs) error {
 
 	//active or not account
 	if initializeAccount(b, reply) != true {
+		fmt.Printf("Account : %+v \n", reply.Violations)
 		return nil
 	}
 
@@ -150,7 +151,7 @@ func aprovalAmount(reply *DataOuputs, amaunt float64) float64 {
 		reply.Account.AvailableLimit = newAmount
 	}
 
-	return newAmount
+	return reply.Account.AvailableLimit
 }
 
 // approve the transaction amount
